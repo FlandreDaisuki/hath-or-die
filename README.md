@@ -1,6 +1,6 @@
 # hath-or-die
 
-- [ ] watch gallery downloading until it complete
+- [x] watch gallery downloading until it complete
 - [ ] archive gallery into repository
   - [ ] write it into db
 - [ ] rating pages

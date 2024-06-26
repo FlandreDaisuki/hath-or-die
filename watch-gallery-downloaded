@@ -1,0 +1,9 @@
+#!/bin/sh
+
+inotifywait -mr -e close_write --format '%w%f' ~/downloading | while read -r FILE_PATH; do
+  FILE_DIR_PATH="$(dirname "$FILE_PATH")"
+  FILE_NAME="$(basename "$FILE_PATH")"
+  if [ "$FILE_NAME" = 'galleryinfo.txt' ]; then
+    ~/bin/archive-gallery "$FILE_DIR_PATH"
+  fi
+done
