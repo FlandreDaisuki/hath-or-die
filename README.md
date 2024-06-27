@@ -1,8 +1,8 @@
 # hath-or-die
 
 - [x] watch gallery downloading until it complete
-- [ ] archive gallery into repository
-  - [ ] write it into db
+- [x] archive gallery into repository
+  - [x] write it into db
 - [ ] rating pages
   - [ ] CRUD in db
   - [ ] low rate to delete

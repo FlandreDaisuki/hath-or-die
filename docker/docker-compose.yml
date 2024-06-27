@@ -1,0 +1,10 @@
+services:
+  hath-or-die:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: hath-or-die
+    volumes:
+      - "${DOWNLOADING_DIR}:/home/yomiko/downloading"
+      - "${ARCHIVED_DIR}:/home/yomiko/archived"
+      - "${SQLITE_DB_PATH:-../db.sqlite3}:/home/yomiko/db.sqlite3"

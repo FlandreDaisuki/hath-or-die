@@ -1,3 +1,102 @@
 #!/bin/sh
 
-echo "to archive: $*"
+DB_PATH="${HOME}/db.sqlite3"
+ARCHIVED_DIR="${HOME}/archived"
+
+print_err() {
+  echo 1>&2 "$*"
+}
+
+print_help() {
+  echo 'Usage: archive-gellery <gallery-includes-txt-path>'
+}
+
+# e.g.
+# "[Foo] foobar [1234567]"
+# "[Foo] foobar [1234567-1280x]"
+extract_info_by_path() {
+  PROCESSING_GALLERY_BASE="$(basename "$1")"
+
+  TITLE="${PROCESSING_GALLERY_BASE%[*}"
+  # Extract the suffix in \[.*\]$
+  SUFFIX="${PROCESSING_GALLERY_BASE##*[}"
+  SUFFIX="${SUFFIX%]*}"
+
+  if echo "${SUFFIX}" | grep -q "-"; then
+    GID="${SUFFIX%-*}"
+    RESOLUTION="${SUFFIX#*-}"
+  else
+    GID="${SUFFIX}"
+    RESOLUTION="original"
+  fi
+
+  jq -nc \
+    --arg GID "${GID}" \
+    --arg TITLE "${TITLE}" \
+    --arg RESOLUTION "${RESOLUTION}" \
+    '{gid: $GID, title: $TITLE , resulution: $RESOLUTION}'
+}
+
+if [ "$#" != '1' ]; then
+  print_help && exit 1
+fi
+
+GALLERY_PATH="$1"
+
+if [ ! -d "${GALLERY_PATH}" ]; then
+  print_help && exit 2
+fi
+
+if [ ! -e "${GALLERY_PATH}/galleryinfo.txt" ]; then
+  print_help && exit 3
+fi
+
+META="$(extract_info_by_path "${GALLERY_PATH}")"
+GID="$(echo "${META}" | jq -r '.gid')"
+RESOLUTION="$(echo "${META}" | jq -r '.resulution')"
+TITLE="$(echo "${META}" | jq -r '.title')"
+
+# trandform all images to webp
+find "${GALLERY_PATH}" -type f -not -name '*.txt' | while read -r IMAGE; do
+  cwebp -quiet "${IMAGE}" -o "${IMAGE%.*}.webp"
+done
+
+# zip up original images and webp images
+TMP_WORKDIR="$(mktemp -d)"
+7z a -bsp0 -bso0 "${TMP_WORKDIR}/original.7z" "${GALLERY_PATH}/*" -x!*.txt -x!*.webp
+7z a -bsp0 -bso0 "${TMP_WORKDIR}/webp.7z" "${GALLERY_PATH}/*.webp" -x!*.txt
+
+ORIGINAL_SIZE="$(stat -c %s "${TMP_WORKDIR}/original.7z")"
+WEBP_SIZE=$(stat -c %s "${TMP_WORKDIR}/webp.7z")
+
+# leave the small one & clean up
+if [ "${ORIGINAL_SIZE}" -le "${WEBP_SIZE}" ]; then
+  mv "${TMP_WORKDIR}/original.7z" "${ARCHIVED_DIR}/${TITLE}.7z"
+else
+  mv "${TMP_WORKDIR}/webp.7z" "${ARCHIVED_DIR}/${TITLE}.7z"
+fi
+rm -rf "${TMP_WORKDIR}" "${GALLERY_PATH}"
+
+# update db
+if [ ! -e "${DB_PATH}" ]; then
+  print_err "you should mount db at ~/db.sqlite3" && exit 4
+fi
+
+sqlite3 "${DB_PATH}" "
+  CREATE TABLE IF NOT EXISTS galleries (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      gid INTEGER UNIQUE,
+      token TEXT,
+      title TEXT NOT NULL,
+      title_jpn TEXT,
+      rating REAL DEFAULT NULL,
+      resolution TEXT DEFAULT 'original',
+      tags TEXT
+  );
+  CREATE INDEX IF NOT EXISTS idx_galleries_gid ON galleries(gid);
+"
+
+sqlite3 "${DB_PATH}" "
+  INSERT INTO galleries (gid, resolution, title)
+  VALUES ($GID, '$RESOLUTION', '$TITLE');
+"
