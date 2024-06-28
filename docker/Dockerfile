@@ -11,7 +11,7 @@ RUN apk add --no-cache dcron libcap \
 
 WORKDIR /home/yomiko
 
-COPY ../archive-gallery ../watch-gallery-downloaded ../entry.sh /home/yomiko/bin/
+COPY ../bin/* /home/yomiko/bin/
 COPY ../crontabs/yomiko /home/yomiko/crontabs/
 
 RUN chmod +x /home/yomiko/bin/* \
