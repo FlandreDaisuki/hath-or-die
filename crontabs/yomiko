@@ -1,0 +1,1 @@
+* * * * * flock -n /tmp/watch-gallery-downloaded.lockfile /home/yomiko/bin/watch-gallery-downloaded >> /home/yomiko/logs/watch-gallery-downloaded.log

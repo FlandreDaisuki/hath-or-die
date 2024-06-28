@@ -2,10 +2,8 @@
 
 DOWNLOADING_DIR="${HOME}/downloading"
 
-inotifywait -mr -e close_write --format '%w%f' "${DOWNLOADING_DIR}" | while read -r FILE_PATH; do
-  FILE_DIR_PATH="$(dirname "${FILE_PATH}")"
-  FILE_NAME="$(basename "${FILE_PATH}")"
-  if [ "${FILE_NAME}" = 'galleryinfo.txt' ]; then
-    archive-gallery "${FILE_DIR_PATH}"
-  fi
+find "${DOWNLOADING_DIR}" -name 'galleryinfo.txt' | while read -r FILE_PATH; do
+  archive-gallery "$(dirname "${FILE_PATH}")" &
 done
+
+wait
