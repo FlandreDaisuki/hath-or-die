@@ -1,1 +1,2 @@
 * * * * * flock -n /tmp/watch-gallery-downloaded.lockfile /home/yomiko/bin/watch-gallery-downloaded >> /home/yomiko/logs/watch-gallery-downloaded.log
+* * * * * flock -n /tmp/sync-remote-galleries.lockfile /home/yomiko/bin/sync-remote-galleries >> /home/yomiko/logs/sync-remote-galleries.log

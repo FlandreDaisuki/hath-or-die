@@ -1,0 +1,69 @@
+#!/bin/sh
+set -e
+
+DB_PATH="${HOME}/db.sqlite3"
+
+print_err() {
+  echo 1>&2 "$*"
+}
+
+get_token_by_gid() {
+  GID="$1"
+  # "${gid}/${token}"
+  MATCHED="$(
+    curl -sL "https://exhentai.org/?next=$((GID + 1))" -H "Cookie: ${EXHENTAI_COOKIES}" |
+      rg -o "${GID}/\w+" |
+      head -n 1
+  )"
+  TOKEN="$(echo "${MATCHED}" | jq -Rrc 'split("/")[1]')"
+  if [ "${TOKEN}" != 'null' ]; then
+    echo "${TOKEN}"
+  else
+    print_err "Can not get token from gid: ${GID}"
+  fi
+}
+
+get_metadata() {
+  # gid token
+  GID="$1"
+  TOKEN="$2"
+  PAYLOAD="$(
+    jq -nc --arg GID "${GID}" --arg TOKEN "${TOKEN}" \
+      '{method: "gdata", gidlist:[[$GID | tonumber, $TOKEN]], namespace: 1}'
+  )"
+
+  RESPONSE_JSON="$(curl -fsL 'https://api.e-hentai.org/api.php' \
+    -X POST -H 'Content-Type: application/json' \
+    --data "${PAYLOAD}")"
+  [ -z "${RESPONSE_JSON}" ] && return 1
+
+  echo "${RESPONSE_JSON}" | jq -c '.gmetadata[0]'
+}
+
+sync_gallery_metadata_by_json() {
+  RECORD_JSON="$1"
+  TABLE_ID="$(echo "${RECORD_JSON}" | jq '.id')"
+  GID="$(echo "${RECORD_JSON}" | jq '.gid')"
+  TOKEN="$(get_token_by_gid "${GID}")"
+  [ -z "$TOKEN" ] && return 1
+
+  METADATA="$(get_metadata "${GID}" "${TOKEN}")"
+  TITLE="$(echo "${METADATA}" | jq -r '.title')"
+  TITLE_JPN="$(echo "${METADATA}" | jq -r '.title_jpn')"
+  TAGS="$(echo "${METADATA}" | jq -c '.tags')"
+
+  sqlite3 "${DB_PATH}" \
+    ".parameter set @id ${TABLE_ID}" \
+    ".parameter set @token '${TOKEN}'" \
+    ".parameter set @title '${TITLE}'" \
+    ".parameter set @title_jpn '${TITLE_JPN}'" \
+    ".parameter set @tags '${TAGS}'" \
+    "UPDATE galleries SET token = @token, title = @title, title_jpn = @title_jpn, tags = @tags WHERE id = @id;"
+
+  echo "Sync: '${TITLE_JPN}'"
+}
+
+# TODO: parallel version is hard to implement in /bin/sh
+sqlite3 "${DB_PATH}" --json 'SELECT * FROM galleries WHERE token is NULL LIMIT 5' | jq -c '.[]' | while read -r NEED_SYNC_JSON; do
+  sync_gallery_metadata_by_json "${NEED_SYNC_JSON}"
+done

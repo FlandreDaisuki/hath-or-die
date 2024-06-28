@@ -8,3 +8,5 @@ services:
       - "${DOWNLOADING_DIR}:/home/yomiko/downloading"
       - "${ARCHIVED_DIR}:/home/yomiko/archived"
       - "${SQLITE_DB_PATH:-../db.sqlite3}:/home/yomiko/db.sqlite3"
+    environment:
+      - EXHENTAI_COOKIES=${EXHENTAI_COOKIES}
