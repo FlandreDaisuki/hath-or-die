@@ -58,8 +58,7 @@ RUN apk add --no-cache dcron libcap \
 
 WORKDIR /home/yomiko
 
-COPY ../bin/* /home/yomiko/bin/
-COPY ../crontabs/yomiko /home/yomiko/crontabs/
+COPY .. /home/yomiko/
 
 RUN chmod +x /home/yomiko/bin/* \
  && mkdir -p /home/yomiko/downloading /home/yomiko/logs \

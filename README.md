@@ -7,7 +7,7 @@
 - [ ] rating pages
   - [ ] CRUD in db
   - [ ] low rate to delete
-- [ ] scheduling update the same name gallery
+- [ ] ~~scheduling update the same name gallery~~
 
 ---
 
