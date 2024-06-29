@@ -1,8 +1,6 @@
 #!/bin/sh
 set -e
 
-DB_PATH="${HOME}/db.sqlite3"
-
 print_err() {
   echo 1>&2 "$*"
 }
@@ -50,20 +48,36 @@ sync_gallery_metadata_by_json() {
   METADATA="$(get_metadata "${GID}" "${TOKEN}")"
   TITLE="$(echo "${METADATA}" | jq -r '.title')"
   TITLE_JPN="$(echo "${METADATA}" | jq -r '.title_jpn')"
+  RATING="$(echo "${METADATA}" | jq -r '.rating')"
+  FILE_COUNT="$(echo "${METADATA}" | jq -r '.filecount')"
+  EXPUNGED="$(echo "${METADATA}" | jq -r 'if .expunged then 1 else 0 end')"
   TAGS="$(echo "${METADATA}" | jq -c '.tags')"
 
-  sqlite3 "${DB_PATH}" \
+  sqlite3-exec \
     ".parameter set @id ${TABLE_ID}" \
     ".parameter set @token '${TOKEN}'" \
     ".parameter set @title '${TITLE}'" \
     ".parameter set @title_jpn '${TITLE_JPN}'" \
+    ".parameter set @rating ${RATING}" \
+    ".parameter set @file_count ${FILE_COUNT}" \
+    ".parameter set @expunged ${EXPUNGED}" \
+    ".parameter set @updated_at '$(date -u +"%Y-%m-%dT%H:%M:%SZ")'" \
     ".parameter set @tags '${TAGS}'" \
-    "UPDATE galleries SET token = @token, title = @title, title_jpn = @title_jpn, tags = @tags WHERE id = @id;"
+    "UPDATE galleries SET
+        token = @token,
+        title = @title,
+        title_jpn = @title_jpn,
+        rating = @rating,
+        file_count = @file_count,
+        expunged = @expunged,
+        updated_at = @updated_at,
+        tags = @tags
+      WHERE id = @id;"
 
   echo "Sync: '${TITLE_JPN}'"
 }
 
 # TODO: parallel version is hard to implement in /bin/sh
-sqlite3 "${DB_PATH}" --json 'SELECT * FROM galleries WHERE token is NULL LIMIT 5' | jq -c '.[]' | while read -r NEED_SYNC_JSON; do
+sqlite3-exec 'SELECT * FROM galleries WHERE token is NULL LIMIT 5' | jq -c '.[]' | while read -r NEED_SYNC_JSON; do
   sync_gallery_metadata_by_json "${NEED_SYNC_JSON}"
 done

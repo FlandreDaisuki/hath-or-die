@@ -1,0 +1,29 @@
+#!/bin/sh
+
+DB_PATH="${HOME}/db.sqlite3"
+
+print_err() {
+  echo 1>&2 "$*"
+}
+
+if [ ! -e "${DB_PATH}" ]; then
+  print_err "you should mount db at ~/db.sqlite3" && exit 1
+fi
+
+sqlite3 "${DB_PATH}" "
+  CREATE TABLE IF NOT EXISTS galleries (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    gid INTEGER UNIQUE NOT NULL,
+    token TEXT,
+    title TEXT,
+    title_jpn TEXT,
+    rating REAL,
+    file_count INTEGER,
+    expunged BOOLEAN,
+    updated_at TEXT,
+    tags TEXT
+  );
+  CREATE INDEX IF NOT EXISTS idx_galleries_gid ON galleries(gid);
+"
+
+sqlite3 "${DB_PATH}" --json "$@"

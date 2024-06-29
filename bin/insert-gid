@@ -1,0 +1,13 @@
+#!/bin/sh
+
+print_help() {
+  echo 'Usage: insert-gid <gallery-id>'
+}
+
+if [ "$#" != '1' ]; then
+  print_help && exit 1
+fi
+
+sqlite3-exec \
+  ".parameter set @gid ${1}" \
+  "INSERT INTO galleries (gid) VALUES (@gid);"

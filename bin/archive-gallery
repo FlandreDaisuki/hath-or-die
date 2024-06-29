@@ -1,6 +1,5 @@
 #!/bin/sh
 
-DB_PATH="${HOME}/db.sqlite3"
 ARCHIVED_DIR="${HOME}/archived"
 
 print_err() {
@@ -24,17 +23,14 @@ extract_info_by_path() {
 
   if echo "${SUFFIX}" | grep -q "-"; then
     GID="${SUFFIX%-*}"
-    RESOLUTION="${SUFFIX#*-}"
   else
     GID="${SUFFIX}"
-    RESOLUTION="original"
   fi
 
   jq -nc \
     --arg GID "${GID}" \
     --arg TITLE "${TITLE}" \
-    --arg RESOLUTION "${RESOLUTION}" \
-    '{gid: $GID, title: $TITLE , resulution: $RESOLUTION}'
+    '{gid: $GID, title: $TITLE}'
 }
 
 if [ "$#" != '1' ]; then
@@ -53,7 +49,6 @@ fi
 
 META="$(extract_info_by_path "${GALLERY_PATH}")"
 GID="$(echo "${META}" | jq -r '.gid')"
-RESOLUTION="$(echo "${META}" | jq -r '.resulution')"
 TITLE="$(echo "${META}" | jq -r '.title')"
 
 # trandform all images to webp
@@ -77,26 +72,7 @@ else
 fi
 rm -rf "${TMP_WORKDIR}" "${GALLERY_PATH}"
 
-# update db
-if [ ! -e "${DB_PATH}" ]; then
-  print_err "you should mount db at ~/db.sqlite3" && exit 4
-fi
-
-sqlite3 "${DB_PATH}" "
-  CREATE TABLE IF NOT EXISTS galleries (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      gid INTEGER UNIQUE,
-      token TEXT,
-      title TEXT NOT NULL,
-      title_jpn TEXT,
-      rating REAL DEFAULT NULL,
-      resolution TEXT DEFAULT 'original',
-      tags TEXT
-  );
-  CREATE INDEX IF NOT EXISTS idx_galleries_gid ON galleries(gid);
-"
-
-sqlite3 "${DB_PATH}" "
-  INSERT INTO galleries (gid, resolution, title)
-  VALUES ($GID, '$RESOLUTION', '$TITLE');
+sqlite3-exec "
+  INSERT INTO galleries (gid, title)
+  VALUES ($GID, '$TITLE');
 "
