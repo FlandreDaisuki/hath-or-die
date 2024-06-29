@@ -7,7 +7,7 @@ print_err() {
 }
 
 if [ ! -e "${DB_PATH}" ]; then
-  print_err "you should mount db at ~/db.sqlite3" && exit 1
+  print_err "you should mount db at ${DB_PATH}" && exit 1
 fi
 
 sqlite3 "${DB_PATH}" "
@@ -24,6 +24,14 @@ sqlite3 "${DB_PATH}" "
     tags TEXT
   );
   CREATE INDEX IF NOT EXISTS idx_galleries_gid ON galleries(gid);
+
+  CREATE TABLE IF NOT EXISTS archived (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    galleries_gid INTEGER,
+    self_rating REAL,
+    updated_at TEXT
+  );
+  CREATE INDEX IF NOT EXISTS idx_archived_galleries_gid ON archived(galleries_gid);
 "
 
 sqlite3 "${DB_PATH}" --json "$@"
