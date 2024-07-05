@@ -18,9 +18,11 @@ sqlite3 "${DB_PATH}" "
     title TEXT,
     title_jpn TEXT,
     rating REAL,
+    file_path TEXT,
     file_count INTEGER,
     expunged BOOLEAN,
     updated_at TEXT,
+    rated_then_deleted_at TEXT,
     tags TEXT
   );
   CREATE INDEX IF NOT EXISTS idx_galleries_gid ON galleries(gid);

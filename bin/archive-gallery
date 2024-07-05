@@ -16,7 +16,7 @@ print_help() {
 extract_info_by_path() {
   PROCESSING_GALLERY_BASE="$(basename "$1")"
 
-  TITLE="${PROCESSING_GALLERY_BASE%[*}"
+  GALLERY_FILE_TITLE="${PROCESSING_GALLERY_BASE%[*}"
   # Extract the suffix in \[.*\]$
   SUFFIX="${PROCESSING_GALLERY_BASE##*[}"
   SUFFIX="${SUFFIX%]*}"
@@ -29,8 +29,8 @@ extract_info_by_path() {
 
   jq -nc \
     --arg GID "${GID}" \
-    --arg TITLE "${TITLE}" \
-    '{gid: $GID, title: $TITLE}'
+    --arg TITLE "${GALLERY_FILE_TITLE}" \
+    '{gid: $GID, file_title: $TITLE | sub("\\s*$"; "") | sub("^\\s*"; "")}'
 }
 
 if [ "$#" != '1' ]; then
@@ -49,7 +49,7 @@ fi
 
 META="$(extract_info_by_path "${GALLERY_PATH}")"
 GID="$(echo "${META}" | jq -r '.gid')"
-TITLE="$(echo "${META}" | jq -r '.title')"
+FILE_TITLE="$(echo "${META}" | jq -r '.file_title')"
 
 # trandform all images to webp
 find "${GALLERY_PATH}" -type f -not -name '*.txt' | while read -r IMAGE; do
@@ -66,13 +66,13 @@ WEBP_SIZE=$(stat -c %s "${TMP_WORKDIR}/webp.7z")
 
 # leave the small one & clean up
 if [ "${ORIGINAL_SIZE}" -le "${WEBP_SIZE}" ]; then
-  mv "${TMP_WORKDIR}/original.7z" "${ARCHIVED_DIR}/${TITLE}.7z"
+  mv "${TMP_WORKDIR}/original.7z" "${ARCHIVED_DIR}/${FILE_TITLE}.7z"
 else
-  mv "${TMP_WORKDIR}/webp.7z" "${ARCHIVED_DIR}/${TITLE}.7z"
+  mv "${TMP_WORKDIR}/webp.7z" "${ARCHIVED_DIR}/${FILE_TITLE}.7z"
 fi
 rm -rf "${TMP_WORKDIR}" "${GALLERY_PATH}"
 
 sqlite3-exec "
-  INSERT INTO galleries (gid, title)
-  VALUES ($GID, '$TITLE');
+  INSERT INTO galleries (gid, file_path)
+  VALUES ($GID, '${FILE_TITLE}.7z');
 "
