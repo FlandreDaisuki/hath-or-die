@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hath or Die</title>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <link rel="stylesheet" href="/reset.css">
+</head>
+<body>
+  <div id="app">
+    <h1>Hath or Die</h1>
+    <table>
+      <thead>
+        <tr>
+          <th>標題</th>
+          <th>下載</th>
+          <th>評分</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="g in galleries20" :key="g.id">
+          <td>{{ g.title_jpn }}</td>
+          <td><a :href="toDownloadLink(g)">下載</a></td>
+          <td><button type="button" @click="openRatingDialog(g)">評分</button></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <dialog id="rating-dialog" ref="ratingDialogEl">
+      <form>
+        <label v-for="i in 11">
+          <input type="radio" name="rating" :value="i" v-model="ratingInput">
+          <span>{{ i }}</span>
+        </label>
+        <div>
+          <button type="submit" formmethod="dialog">Cancel</button>
+          <button type="submit" @click.prevent="confirmRatingDialog">Confirm</button>
+        </div>
+      </form>
+    </dialog>
+  </div>
+
+  <script>
+    const { createApp, ref, onBeforeMount } = Vue;
+
+    const fetchUnratedGalleries20 = async() => {
+      const resp = await fetch(`/api/v1/unrated-galleries?page=1`);
+      if(resp.ok) {
+        return { galleries: await resp.json() };
+      } else {
+        return { error: resp.status }
+      }
+    }
+
+    const fetchRateGallery = async(gid, rating) => {
+      const resp = await fetch(`/api/v1/rate-gallery`, {
+        method: 'PUT',
+        body: JSON.stringify({gid, rating})
+      });
+      if(resp.ok) {
+        return { ok: true };
+      } else {
+        return { error: resp.status }
+      }
+    }
+
+    const app = createApp({
+      setup() {
+        const galleries20 = ref([]);
+        onBeforeMount(async() => {
+          const result = await fetchUnratedGalleries20();
+          if(!result.error) {
+            galleries20.value = result.galleries;
+          }
+        });
+
+        const toDownloadLink = (gallery) => `/api/v1/download/${gallery.gid}`;
+
+        const ratingGallery = ref(null);
+        const ratingDialogEl = ref();
+        const ratingInput = ref();
+        const openRatingDialog = (gallery) => {
+          if(! ratingDialogEl.value) { return console.error('there is no ratingDialogEl'); }
+
+          ratingGallery.value = gallery;
+          ratingDialogEl.value.showModal();
+        };
+        const confirmRatingDialog = async() => {
+          // TODO: loading handler
+          const result = await fetchRateGallery(ratingGallery.value.gid, ratingInput.value);
+          if(!result.ok) {
+            console.error(result)
+          }
+          ratingGallery.value = null;
+          ratingDialogEl.value.close();
+        };
+        return {
+          ratingDialogEl,
+          galleries20,
+          ratingInput,
+          toDownloadLink,
+          openRatingDialog,
+          confirmRatingDialog,
+        };
+      },
+    });
+
+    app.mount('#app');
+  </script>
+</body>
+</html>

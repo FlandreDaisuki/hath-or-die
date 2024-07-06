@@ -1,3 +1,5 @@
 #!/bin/sh
 
-crond -l 2 -f -c /home/yomiko/crontabs
+crond -l 2 -c /home/yomiko/crontabs -L /home/yomiko/logs/dcron.log
+
+bun /home/yomiko/server/app.js

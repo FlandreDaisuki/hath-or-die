@@ -4,9 +4,9 @@
 - [x] archive gallery into repository
   - [x] write it into db
   - [x] sync full metadata into db
-- [ ] rating pages
-  - [ ] CRUD in db
-  - [ ] low rate to delete
+- [x] rating pages
+  - [x] CRUD in db
+  - [x] low rate to delete
 - [ ] ~~scheduling update the same name gallery~~
 
 ---

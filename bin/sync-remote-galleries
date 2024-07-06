@@ -26,13 +26,22 @@ get_metadata() {
   GID="$1"
   TOKEN="$2"
   PAYLOAD="$(
-    jq -nc --arg GID "${GID}" --arg TOKEN "${TOKEN}" \
-      '{method: "gdata", gidlist:[[$GID | tonumber, $TOKEN]], namespace: 1}'
+    jq -nc \
+      --arg GID "${GID}" \
+      --arg TOKEN "${TOKEN}" \
+      '{
+        method: "gdata",
+        gidlist:[[$GID | tonumber, $TOKEN]],
+        namespace: 1
+      }'
   )"
 
-  RESPONSE_JSON="$(curl -fsL 'https://api.e-hentai.org/api.php' \
-    -X POST -H 'Content-Type: application/json' \
-    --data "${PAYLOAD}")"
+  RESPONSE_JSON="$(
+    curl -fsL -X POST 'https://api.e-hentai.org/api.php' \
+      -H 'Content-Type: application/json' \
+      --data "${PAYLOAD}"
+  )"
+
   [ -z "${RESPONSE_JSON}" ] && return 1
 
   echo "${RESPONSE_JSON}" | jq -c '.gmetadata[0]'

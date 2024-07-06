@@ -4,9 +4,14 @@ services:
       context: ..
       dockerfile: docker/Dockerfile
     container_name: hath-or-die
+    ports:
+      - 3000:3000
     volumes:
       - "${DOWNLOADING_DIR}:/home/yomiko/downloading"
       - "${ARCHIVED_DIR}:/home/yomiko/archived"
       - "${SQLITE_DB_PATH:-../db.sqlite3}:/home/yomiko/db.sqlite3"
     environment:
       - EXHENTAI_COOKIES=${EXHENTAI_COOKIES}
+      - EXHENTAI_API_KEY=${EXHENTAI_API_KEY}
+      - EXHENTAI_FAVORITE=${EXHENTAI_FAVORITE}
+    command: /home/yomiko/bin/entry.sh

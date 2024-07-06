@@ -1,0 +1,93 @@
+#!/bin/sh
+
+ARCHIVED_DIR="${HOME}/archived"
+
+print_help() {
+  echo 'Usage: rate-gid <gallery-id> <1-11>'
+}
+
+if [ "$#" != '2' ]; then
+  print_help && exit 1
+fi
+
+GID="${1}"
+RATING="${2}"
+
+case "${RATING}" in
+[0-9] | 10 | 11) ;;
+*) print_help && exit 2 ;;
+esac
+
+TOKEN="$(
+  sqlite3-exec \
+    ".parameter set @gid ${GID}" \
+    'SELECT token FROM galleries WHERE gid = @gid' |
+    jq -r '.[0].token'
+)"
+
+post_rate() {
+  API_UID="$(echo "${EXHENTAI_COOKIES}" | jq -Rr 'split("; ")[] | select(startswith("ipb_member_id=")) | sub("ipb_member_id="; "")')"
+  API_KEY="${EXHENTAI_API_KEY}"
+  PAYLOAD="$(
+    jq -ncr \
+      --arg APIKEY "${API_KEY}" \
+      --arg APIUID "${API_UID}" \
+      --arg GID "${GID}" \
+      --arg TOKEN "${TOKEN}" \
+      --arg RATING "${RATING}" \
+      '{
+        method: "rategallery",
+        apiuid: $APIUID | tonumber,
+        apikey: $APIKEY,
+        gid: $GID | tonumber,
+        token: $TOKEN,
+        rating: ($RATING | tonumber | if . > 10 then 10 else . end)
+      }'
+  )"
+
+  curl -fsL -X POST 'https://exhentai.org/api.php' \
+    -H 'Content-Type: application/json' \
+    -H "Cookie: ${EXHENTAI_COOKIES}" \
+    --data "${PAYLOAD}" >/dev/null
+}
+
+post_rate
+
+post_bookmark() {
+  curl -fsL -X POST "https://exhentai.org/gallerypopups.php?gid=${GID}&t=${TOKEN}&act=addfav" \
+    -H 'Content-Type: application/x-www-form-urlencoded' \
+    -H "Cookie: ${EXHENTAI_COOKIES}" \
+    --data-raw "favcat=${EXHENTAI_FAVORITE}&favnote=&update=1" >/dev/null
+}
+
+[ "${RATING}" -ge 8 ] && [ -n "${EXHENTAI_FAVORITE}" ] && post_bookmark
+
+NOW="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+
+sqlite3-exec \
+  ".parameter set @gid ${GID}" \
+  ".parameter set @rating ${RATING}" \
+  ".parameter set @updated_at '${NOW}'" \
+  "INSERT INTO archived (galleries_gid, self_rating, updated_at)
+   VALUES (@gid, @rating, @updated_at)
+   ON CONFLICT(galleries_gid) DO UPDATE SET
+   self_rating = @rating,
+   updated_at = @updated_at;"
+
+if [ "${RATING}" -ne 11 ]; then
+  sqlite3-exec \
+    ".parameter set @gid ${GID}" \
+    ".parameter set @rated_then_deleted_at '${NOW}'" \
+    "UPDATE galleries SET
+        rated_then_deleted_at = @rated_then_deleted_at
+      WHERE gid = @gid;"
+
+  GALLERY_PATH="$(
+    sqlite3-exec \
+      ".parameter set @gid ${GID}" \
+      "SELECT file_path FROM galleries WHERE gid = @gid;" |
+      jq -rc '.[0].file_path'
+  )"
+
+  rm -rf "${ARCHIVED_DIR:?}/${GALLERY_PATH}"
+fi

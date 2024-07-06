@@ -29,11 +29,11 @@ sqlite3 "${DB_PATH}" "
 
   CREATE TABLE IF NOT EXISTS archived (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    galleries_gid INTEGER,
+    galleries_gid INTEGER UNIQUE,
     self_rating REAL,
     updated_at TEXT
   );
-  CREATE INDEX IF NOT EXISTS idx_archived_galleries_gid ON archived(galleries_gid);
+  CREATE UNIQUE INDEX IF NOT EXISTS idx_archived_galleries_gid ON archived(galleries_gid);
 "
 
 sqlite3 "${DB_PATH}" --json "$@"
