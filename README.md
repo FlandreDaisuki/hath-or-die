@@ -12,3 +12,9 @@
 ---
 
 - [ ] error handlings
+
+## Development
+
+```sh
+docker compose -p hath-or-die -f docker/docker-compose.yml up --build
+```

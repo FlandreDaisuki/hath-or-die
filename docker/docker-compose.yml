@@ -3,6 +3,7 @@ services:
     build:
       context: ..
       dockerfile: docker/Dockerfile
+    image: ghcr.io/flandredaisuki/hath-or-die
     container_name: hath-or-die
     ports:
       - 3000:3000
@@ -10,6 +11,7 @@ services:
       - "${DOWNLOADING_DIR}:/home/yomiko/downloading"
       - "${ARCHIVED_DIR}:/home/yomiko/archived"
       - "${SQLITE_DB_PATH:-../db.sqlite3}:/home/yomiko/db.sqlite3"
+      - "../logs:/home/yomiko/logs"
     environment:
       - EXHENTAI_COOKIES=${EXHENTAI_COOKIES}
       - EXHENTAI_API_KEY=${EXHENTAI_API_KEY}
