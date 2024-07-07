@@ -47,7 +47,14 @@ RUN --mount=type=bind,from=bun-stage,source=/tmp,target=/tmp \
       /tmp/glibc-bin.apk \
     && ln -s /usr/local/bin/bun /usr/local/bin/bunx
 
-RUN apk add --no-cache jq 7zip libwebp-tools sqlite ripgrep curl \
+RUN apk add --no-cache \
+    jq \
+    7zip \
+    curl \
+    sqlite \
+    ripgrep \
+    imagemagick \
+    libwebp-tools \
  && addgroup -g 1000 yomiko \
  && adduser -u 1000 -G yomiko -h /home/yomiko -s /bin/bash -D yomiko
 

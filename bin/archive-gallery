@@ -54,7 +54,20 @@ FILE_TITLE="$(echo "${META}" | jq -r '.file_title')"
 
 # trandform all images to webp
 find "${GALLERY_PATH}" -type f -not -name '*.txt' | while read -r IMAGE; do
-  cwebp -quiet "${IMAGE}" -o "${IMAGE%.*}.webp"
+  PATH_NO_EXT="${IMAGE%.*}"
+  EXT="${IMAGE##*.}"
+  if [ ! -e "${PATH_NO_EXT}.webp" ]; then
+    if ! cwebp -quiet "${IMAGE}" -o "${PATH_NO_EXT}.webp"; then
+      case "${EXT}" in
+      jpg | jpeg)
+        # https://imagemagick.org/script/color-management.php
+        magick "${IMAGE}" -set colorspace RGB "${PATH_NO_EXT}.rgb.jpg"
+        cwebp -quiet "${PATH_NO_EXT}.rgb.jpg" -o "${PATH_NO_EXT}.webp"
+        ;;
+      *) ;;
+      esac
+    fi
+  fi
 done
 
 # zip up original images and webp images
