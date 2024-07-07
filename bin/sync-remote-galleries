@@ -9,7 +9,7 @@ get_token_by_gid() {
   GID="$1"
   # "${gid}/${token}"
   MATCHED="$(
-    curl -sL "https://exhentai.org/?next=$((GID + 1))" -H "Cookie: ${EXHENTAI_COOKIES}" |
+    curl -sL "https://exhentai.org/?f_sft=on&f_sfu=on&f_sfl=on&next=$((GID + 1))" -H "Cookie: ${EXHENTAI_COOKIES}" |
       rg -o "${GID}/\w+" |
       head -n 1
   )"
@@ -21,7 +21,7 @@ get_token_by_gid() {
 
   # search with expunged galleries
   MATCHED2="$(
-    curl -sL "https://exhentai.org/?f_sh=on&next=$((GID + 1))" -H "Cookie: ${EXHENTAI_COOKIES}" |
+    curl -sL "https://exhentai.org/?f_sft=on&f_sfu=on&f_sfl=on&f_sh=on&next=$((GID + 1))" -H "Cookie: ${EXHENTAI_COOKIES}" |
       rg -o "${GID}/\w+" |
       head -n 1
   )"
