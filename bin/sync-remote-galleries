@@ -64,14 +64,14 @@ sync_gallery_metadata_by_json() {
 
   sqlite3-exec \
     ".parameter set @id ${TABLE_ID}" \
-    ".parameter set @token '${TOKEN}'" \
-    ".parameter set @title '${TITLE}'" \
-    ".parameter set @title_jpn '${TITLE_JPN}'" \
+    ".parameter set @token \"'${TOKEN}'\"" \
+    ".parameter set @title \"'${TITLE}'\"" \
+    ".parameter set @title_jpn \"'${TITLE_JPN}'\"" \
     ".parameter set @rating ${RATING}" \
     ".parameter set @file_count ${FILE_COUNT}" \
     ".parameter set @expunged ${EXPUNGED}" \
-    ".parameter set @updated_at '$(date -u +"%Y-%m-%dT%H:%M:%SZ")'" \
-    ".parameter set @tags '${TAGS}'" \
+    ".parameter set @updated_at \"'$(date -u +"%Y-%m-%dT%H:%M:%SZ")'\"" \
+    ".parameter set @tags \"'${TAGS}'\"" \
     "UPDATE galleries SET
         token = @token,
         title = @title,
@@ -88,5 +88,6 @@ sync_gallery_metadata_by_json() {
 
 # TODO: parallel version is hard to implement in /bin/sh
 sqlite3-exec 'SELECT * FROM galleries WHERE token is NULL LIMIT 5' | jq -c '.[]' | while read -r NEED_SYNC_JSON; do
+  echo "Start processing:" "${NEED_SYNC_JSON}"
   sync_gallery_metadata_by_json "${NEED_SYNC_JSON}"
 done

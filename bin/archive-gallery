@@ -1,4 +1,5 @@
 #!/bin/sh
+set -e
 
 ARCHIVED_DIR="${HOME}/archived"
 
@@ -72,7 +73,7 @@ else
 fi
 rm -rf "${TMP_WORKDIR}" "${GALLERY_PATH}"
 
-sqlite3-exec "
-  INSERT INTO galleries (gid, file_path)
-  VALUES ($GID, '${FILE_TITLE}.7z');
-"
+sqlite3-exec \
+  ".parameter set @gid ${GID}" \
+  ".parameter set @file_path \"'${FILE_TITLE}.7z'\"" \
+  "INSERT INTO galleries (gid, file_path) VALUES (@gid, @file_path);"

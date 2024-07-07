@@ -1,9 +1,9 @@
 #!/bin/sh
+set -e
 
 DOWNLOADING_DIR="${HOME}/downloading"
 
 find "${DOWNLOADING_DIR}" -name 'galleryinfo.txt' | while read -r FILE_PATH; do
-  archive-gallery "$(dirname "${FILE_PATH}")" &
+  echo "Start archive gallery: $(dirname "${FILE_PATH}")"
+  archive-gallery "$(dirname "${FILE_PATH}")"
 done
-
-wait

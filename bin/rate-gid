@@ -1,4 +1,5 @@
 #!/bin/sh
+set -e
 
 ARCHIVED_DIR="${HOME}/archived"
 
@@ -67,7 +68,7 @@ NOW="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
 sqlite3-exec \
   ".parameter set @gid ${GID}" \
   ".parameter set @rating ${RATING}" \
-  ".parameter set @updated_at '${NOW}'" \
+  ".parameter set @updated_at \"'${NOW}'\"" \
   "INSERT INTO archived (galleries_gid, self_rating, updated_at)
    VALUES (@gid, @rating, @updated_at)
    ON CONFLICT(galleries_gid) DO UPDATE SET
@@ -77,7 +78,7 @@ sqlite3-exec \
 if [ "${RATING}" -ne 11 ]; then
   sqlite3-exec \
     ".parameter set @gid ${GID}" \
-    ".parameter set @rated_then_deleted_at '${NOW}'" \
+    ".parameter set @rated_then_deleted_at \"'${NOW}'\"" \
     "UPDATE galleries SET
         rated_then_deleted_at = @rated_then_deleted_at
       WHERE gid = @gid;"
