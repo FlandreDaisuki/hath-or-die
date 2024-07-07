@@ -71,7 +71,7 @@ sync_gallery_metadata_by_json() {
     ".parameter set @file_count ${FILE_COUNT}" \
     ".parameter set @expunged ${EXPUNGED}" \
     ".parameter set @updated_at \"'$(date -u +"%Y-%m-%dT%H:%M:%SZ")'\"" \
-    ".parameter set @tags \"'${TAGS}'\"" \
+    ".parameter set @tags '${TAGS}'" \
     "UPDATE galleries SET
         token = @token,
         title = @title,
