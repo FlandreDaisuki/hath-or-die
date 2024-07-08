@@ -89,4 +89,7 @@ rm -rf "${TMP_WORKDIR}" "${GALLERY_PATH}"
 sqlite3-exec \
   ".parameter set @gid ${GID}" \
   ".parameter set @file_path \"'${FILE_TITLE}.7z'\"" \
-  "INSERT INTO galleries (gid, file_path) VALUES (@gid, @file_path);"
+  "INSERT INTO galleries (gid, file_path)
+   VALUES (@gid, @file_path)
+   ON CONFLICT(gid) DO UPDATE SET
+   file_path = @file_path;"
