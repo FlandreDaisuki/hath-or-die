@@ -16,4 +16,5 @@ services:
       - EXHENTAI_COOKIES=${EXHENTAI_COOKIES}
       - EXHENTAI_API_KEY=${EXHENTAI_API_KEY}
       - EXHENTAI_FAVORITE=${EXHENTAI_FAVORITE}
+      - APP_HOSTNAME=${APP_HOSTNAME}
     command: /home/yomiko/bin/entry.sh

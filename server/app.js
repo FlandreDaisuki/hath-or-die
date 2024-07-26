@@ -49,8 +49,9 @@ const server = Bun.serve({
         ORDER BY galleries.updated_at ASC
         LIMIT ? OFFSET ?
       `;
-
-      const results = db.query(statement).all(perPage, offset);
+      const query = db.query(statement);
+      const results = query.all(perPage, offset);
+      query.finalize();
 
       return toCorsResponse(req, new Response(JSON.stringify(results), {
         headers: { 'Content-Type': 'application/json' },
@@ -59,7 +60,10 @@ const server = Bun.serve({
     if (req.method === 'GET' && /^[/]api[/]v1[/]download[/]\d+$/.test(url.pathname)) {
       const gid = url.pathname.split('/').at(-1);
       const statement = `SELECT file_path FROM galleries WHERE gid = ?`;
-      const result = db.query(statement).get(gid);
+      const query = db.query(statement);
+      const result = query.get(gid);
+      query.finalize();
+
       if(!result) {
         return toCorsResponse(req, new Response('Not Found', { status: 404 }));
       }
@@ -84,6 +88,35 @@ const server = Bun.serve({
 
       return toCorsResponse(req, new Response(JSON.stringify({ ok: true })));
     }
+    if(req.method === 'GET' && /^[/]api[/]v1[/]status$/.test(url.pathname)) {
+      const url = new URL(req.url);
+      if(!url.searchParams.has('gid')) {
+        return toCorsResponse(req, new Response(JSON.stringify({ error: 'you should query gid which concat by comma.' }), { status: 400 }));
+      }
+      const gidList = url.searchParams.get('gid')
+        .split(',')
+        .filter(maybeGid => /^\s*\d+\s*$/.test(maybeGid))
+        .map(gid => gid.trim());
+
+      const statement = `
+        SELECT
+          galleries.gid, galleries.token,
+          galleries.title_jpn, archived.self_rating,
+          galleries.expunged, galleries.updated_at,
+          galleries.file_path, galleries.rated_then_deleted_at
+        FROM galleries
+        LEFT JOIN archived ON galleries.gid = archived.galleries_gid
+        WHERE gid IN (${gidList.map(_ => '?').join(',')});
+      `;
+      const query = db.query(statement);
+      const result = query.all(gidList);
+      query.finalize();
+      if(!result) {
+        return toCorsResponse(req, new Response('Unknown error', { status: 400 }));
+      }
+
+      return toCorsResponse(req, new Response(JSON.stringify({ ok: true, galleries: result })));
+    }
     //#endregion APIs
 
 
@@ -95,6 +128,20 @@ const server = Bun.serve({
       }
 
       return new Response(file);
+    }
+    if (req.method === 'GET' && /^[/]hath-or-die.user.js$/.test(url.pathname)) {
+      const file = Bun.file(`${import.meta.dir}/templates/hath-or-die.user.js`);
+      if(! await file.exists()) {
+        return new Response('Not Found', { status: 404 });
+      }
+      const text = await file.text();
+      const output = text.replaceAll('__APP_HOSTNAME__', JSON.stringify(process.env.APP_HOSTNAME))
+
+      return new Response(output, {
+        headers: {
+          "Content-Type": "text/javascript; charset=utf-8",
+        },
+      });
     }
     //#endregion pages
 
