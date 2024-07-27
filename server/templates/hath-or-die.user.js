@@ -33,7 +33,7 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
       const gidGalleryMap = Object.fromEntries(result.galleries.map((g) => [g.gid, g]));
       console.log('gidGalleryMap', gidGalleryMap);
       for(const galleryEl of uncheckedGalleryEls) {
-        if(galleryEl.querySelector('.ir.irb')) { galleryEl.classList.add('⭐'); }
+        if(galleryEl.querySelector('.ir:is(.irb,.irr,.irg)')) { galleryEl.classList.add('⭐'); }
 
         const g = gidGalleryMap[galleryEl.getAttribute('data-gid')];
         if(g) {
