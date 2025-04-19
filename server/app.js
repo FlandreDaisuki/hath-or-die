@@ -68,7 +68,9 @@ const server = Bun.serve({
         return toCorsResponse(req, new Response('Not Found', { status: 404 }));
       }
 
-      const file = Bun.file(`${HOME_DIR}/archived/${result.file_path}`);
+      // NOTE: if file path has single quote, it will has surronding single quote.
+      // e.g. "'[丸居まる] Cherry&GAL's↑↑ [中国翻訳].7z'"
+      const file = Bun.file(`${HOME_DIR}/archived/${result.file_path.replace(/^'(.*)'$/, '$1')}`);
       if(! await file.exists()) {
         return toCorsResponse(req, new Response('Not Found', { status: 404 }));
       }
