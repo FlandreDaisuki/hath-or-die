@@ -20,7 +20,7 @@
       </thead>
       <tbody>
         <tr v-for="g in galleries20" :key="g.id">
-          <td>{{ g.title_jpn }}</td>
+          <td>{{ g.title_jpn || g.title }}</td>
           <td><a :href="toDownloadLink(g)">下載</a></td>
           <td><button type="button" @click="openRatingDialog(g)">評分</button></td>
         </tr>

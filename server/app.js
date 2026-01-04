@@ -39,9 +39,15 @@ const server = Bun.serve({
 
       const statement = `
         SELECT
-          galleries.id, galleries.gid, galleries.token,
-          galleries.title_jpn, galleries.rating,
-          galleries.file_count, galleries.expunged, galleries.updated_at,
+          galleries.id,
+          galleries.gid,
+          galleries.token,
+          galleries.title,
+          galleries.title_jpn,
+          galleries.rating,
+          galleries.file_count,
+          galleries.expunged,
+          galleries.updated_at,
           galleries.file_path
         FROM galleries
         LEFT JOIN archived ON galleries.gid = archived.galleries_gid
